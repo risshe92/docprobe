@@ -5,7 +5,7 @@ from pathlib import Path
 @dataclass
 class AppConfig:
     url: str
-    mode: str = "auto"
+    export_as: str = "md"
     concurrency: int = 4
-    output_dir: Path = Path("./output")
+    output_dir: Path = None
     debug: str = "off"

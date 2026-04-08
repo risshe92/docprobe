@@ -10,7 +10,13 @@ def slugify(value: str) -> str:
     return value[:150] if value else "untitled"
 
 
+def ensure_output_dir(output_dir: Path):
+    """Create only the single output directory needed for this run."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+
 def ensure_output_dirs(base_dir: Path):
+    """Legacy: create all format subdirectories. Kept for compatibility."""
     base_dir.mkdir(parents=True, exist_ok=True)
     (base_dir / "meta").mkdir(exist_ok=True)
     (base_dir / "text").mkdir(exist_ok=True)
@@ -20,7 +26,9 @@ def ensure_output_dirs(base_dir: Path):
 
 
 def write_meta(base_dir: Path, filename: str, data):
-    path = base_dir / "meta" / filename
+    meta_dir = base_dir / "meta"
+    meta_dir.mkdir(parents=True, exist_ok=True)
+    path = meta_dir / filename
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
     return path
@@ -34,16 +42,16 @@ def write_extraction_output(base_dir: Path, extraction_result: dict, page_index:
     slug = slugify(title)
     prefix = f"{page_index:04d}_" if page_index is not None else ""
 
-    if method == "text":
-        path = base_dir / "text" / f"{prefix}{slug}.txt"
-    elif method == "html":
-        path = base_dir / "html" / f"{prefix}{slug}.html"
-    elif method == "markdown":
-        path = base_dir / "markdown" / f"{prefix}{slug}.md"
-    elif method == "ocr":
-        path = base_dir / "ocr" / f"{prefix}{slug}.txt"
-    else:
-        path = base_dir / f"{prefix}{slug}.txt"
+    ext_map = {
+        "text":     ("txt",  base_dir),
+        "html":     ("html", base_dir),
+        "markdown": ("md",   base_dir),
+        "ocr":      ("txt",  base_dir),
+    }
+
+    ext, folder = ext_map.get(method, ("txt", base_dir))
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / f"{prefix}{slug}.{ext}"
 
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
