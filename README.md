@@ -4,18 +4,21 @@ Docprobe is a universal documentation extraction tool built to archive modern do
 
 It automatically detects common documentation frameworks such as Docusaurus, MkDocs, GitBook, and ReadTheDocs, then extracts content using intelligent fallback strategies.
 
-# Features
+## Features
+
 - Automatic documentation platform detection
 - Extracts dynamic SPA documentation sites
 - Toolbar crawling and sidebar navigation discovery
 - Smart extraction fallback: Markdown → Text → OCR
 - Concurrent crawling
 - Resume interrupted crawls
-- PDF export support
+- Post-processing: rename files by chapter title, strip nav boilerplate
+- PDF export support (per-page or single combined manual)
 - OCR support for difficult or image-heavy pages
 - Designed for modern JavaScript-rendered documentation portals
 
-# Supported Documentation Platforms
+## Supported Documentation Platforms
+
 - Docusaurus
 - MkDocs
 - GitBook
@@ -24,222 +27,213 @@ It automatically detects common documentation frameworks such as Docusaurus, MkD
 - PDF-viewer style documentation pages
 - Image-heavy documentation pages via OCR fallback
 
-# Installation
-## 1. Clone the repository
+## Installation
+
+**1. Clone the repository**
 ```bash
 git clone https://github.com/risshe92/docprobe.git
-
 cd docprobe
 ```
-2. Create and activate a virtual environment
 
-```
+**2. Create and activate a virtual environment**
+```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
-3. Install Python dependencies
-```pip install -r requirements.txt```
-4. Install Playwright browser dependencies
-```playwright install chromium```
-5. Install system dependencies
-### Debian
-```sudo apt install tesseract-ocr pandoc texlive-xetex```
-### Arch
-```sudo pacman -S tesseract pandoc texlive-core```
 
+**3. Install Python dependencies**
+```bash
+pip install -r requirements.txt
+```
 
-# Quick Start
--  *Extract a single documentation page:*
-```python3 docprobe.py --url https://docs.kasm.com/docs```
+**4. Install Playwright browser dependencies**
+```bash
+playwright install chromium
+```
 
-- *Crawl a documentation sidebar automatically:*
-```python3 docprobe.py --url https://docs.kasm.com/docs --crawl-toolbar```
-  
-- *Resume an interrupted crawl:*
+**5. Install system dependencies**
 
-  ```python3 docprobe.py --url https://docs.kasm.com/docs --crawl-toolbar --resume```
+Debian/Ubuntu:
+```bash
+sudo apt install tesseract-ocr pandoc texlive-xetex
+```
 
-- *Export extracted markdown pages to PDF:*
+Arch:
+```bash
+sudo pacman -S tesseract pandoc texlive-core
+```
 
-  ```python3 docprobe.py --url https://docs.kasm.com/docs --crawl-toolbar --export pdf```
+## Quick Start
 
-- *Generate a single combined PDF manual:*
-  ```python3 docprobe.py --url https://docs.kasm.com/docs --crawl-toolbar --export pdf-single```
+Extract a single documentation page:
+```bash
+python3 docprobe.py --url https://docs.example.com/docs
+```
 
-  # Command Line Options
-  - Required Argument
-  ```--url```
-Purpose: Target documentation URL.
-Example: ```--url https://docs.kasm.com/docs```
+Crawl a documentation sidebar automatically:
+```bash
+python3 docprobe.py --url https://docs.example.com/docs --crawl-toolbar
+```
 
-# Extraction Mode
-```--mode```
-Purpose: Controls how content is extracted.
+Resume an interrupted crawl:
+```bash
+python3 docprobe.py --url https://docs.example.com/docs --crawl-toolbar --resume
+```
 
-## Supported values:
-- auto
-Smart mode. Automatically chooses the best extraction method based on page analysis.
-- markdown
-Extract rendered HTML and convert to Markdown.
-- text
-Extract plain visible text content.
-- html
-Extract rendered HTML from the main content area.
-- ocr
-Use OCR on screenshots of the page content.
+Export extracted markdown pages to individual PDFs:
+```bash
+python3 docprobe.py --url https://docs.example.com/docs --crawl-toolbar --export-pdf pdf
+```
 
-Default:
---mode auto
+Generate a single combined PDF manual:
+```bash
+python3 docprobe.py --url https://docs.example.com/docs --crawl-toolbar --export-pdf pdf-single
+```
 
-Examples:
---mode auto
---mode markdown
---mode text
---mode html
---mode ocr
+## Command Line Options
 
-## Crawling Options
+### Crawl Options
 
-- --crawl-toolbar
-Purpose: Detect and crawl links found in the documentation sidebar / toolbar.
-Example:
-``--crawl-toolbar``
-- --max-pages
-Purpose: Limit how many pages are crawled from the detected toolbar.
-Example:
-``--max-pages 10``
-Default:
-``--max-pages 0``
-0 means no limit.
-- --resume
-Purpose: Skip URLs that were already processed in a previous crawl.
-Example:
-```--resume```
-Purpose: Useful for large documentation sets or interrupted runs.
-- --concurrency
-Number of concurrent workers used during crawl.
-Example:
-``--concurrency 8``
-Default:
-``--concurrency 4``
-Higher values may improve speed, but increase CPU, memory, and browser usage.
+| Argument | Default | Description |
+|---|---|---|
+| `--url` | required | Target documentation URL |
+| `--export-as` | `md` | Output format: `md`, `txt`, `html`, `ocr` |
+| `-o`, `--output-dir` | `./output/<format>/` | Output directory |
+| `--crawl-toolbar` | off | Crawl all links in the sidebar/toolbar |
+| `--max-pages` | `0` (no limit) | Limit number of pages crawled |
+| `--resume` | off | Skip already-processed URLs |
+| `--concurrency` | `4` | Number of concurrent crawl workers |
+| `--export-pdf` | `none` | Export to PDF after crawl: `none`, `pdf`, `pdf-single` |
+| `--debug` | `off` | Log level: `off`, `error`, `info`, `debug` |
 
-## Output Options
---output-dir
-Directory where all extracted content and metadata will be written.
-Example:
-``--output-dir ./output``
-```--output-dir /home/user/docs_archive```
-Default:
---output-dir ./output
---export
+### Post-process Options
 
-Optional export mode after extraction.
-Supported values:
-- none
-  No PDF export
-- pdf
-  Generate one PDF per Markdown page
-- pdf-single
-  Generate one combined PDF manual
-Examples:
-```--export none```
+| Argument | Description |
+|---|---|
+| `--post-process` | Run post-processing on an existing directory (no crawl) |
+| `--input-dir` | Input directory to process (required with `--post-process`) |
+| `--rename` | Rename files using their first heading or title |
+| `--clean` | Strip nav boilerplate and frontmatter (markdown only) |
+| `--export-pdf` | Export to PDF after processing: `pdf`, `pdf-single` |
 
-```--export pdf```
+## Export Formats
 
-```--export pdf-single```
+`--export-as` controls the output format during crawl:
 
-Default:
---export none
-Extraction Strategy
-When --mode auto is used, Docprobe analyzes the page and chooses the best method automatically.
+| Value | Output |
+|---|---|
+| `md` | Markdown (default) |
+| `txt` | Plain text |
+| `html` | Rendered HTML |
+| `ocr` | OCR text from page screenshots |
 
-## Typical behavior:
-- Structured docs page → markdown
-- Plain content page → text
-- Image-heavy / viewer-like page → ocr
-- Fallback chain in auto mode:
-- markdown → text → ocr
+Output is written to `./output/<format>/` by default, or to `-o` if specified.
+
+## Extraction Strategy
+
+When using the default `md` mode, Docprobe analyzes the page and applies a fallback chain automatically:
+
+```
+markdown → text → ocr
+```
+
 This allows Docprobe to recover from poor Markdown extraction and still capture difficult content.
 
+## Post-Processing
+
+Post-processing runs on an existing directory of extracted files without re-crawling.
+
+Rename files by chapter title:
+```bash
+python3 docprobe.py --post-process --input-dir ./output/md --rename
+```
+
+Clean nav boilerplate from markdown files:
+```bash
+python3 docprobe.py --post-process --input-dir ./output/md --clean
+```
+
+Rename, clean, then export a single combined PDF:
+```bash
+python3 docprobe.py --post-process --input-dir ./output/md --rename --clean --export-pdf pdf-single
+```
+
 ## Output Structure
-Example output layout:
+
 ```
 output/
-├── html/
-├── markdown/
-├── meta/
-├── ocr/
-├── pdf/
-└── text/
+└── md/              # or txt/, html/, ocr/ depending on --export-as
+    ├── 0001_overview.md
+    ├── 0002_getting_started.md
+    └── ...
+    meta/
+    ├── run.json
+    ├── crawl_results.json
+    ├── toolbar.json
+    ├── content.json
+    └── extraction.json
+documentation_manual.pdf   # if --export-pdf pdf-single was used
 ```
-
-### Folder meanings
-```markdown/``` Extracted Markdown pages
-```text/``` Plain text output
-```html/``` Extracted rendered HTML
-```ocr/``` OCR text output and OCR-rel`ated files
-```pdf/``` Exported PDF files
-```meta/``` Crawl metadata, run info, extraction metadata, and crawl results
-
 
 ## Example Commands
- - Single page, automatic mode
+
+Single page, default markdown mode:
+```bash
+python3 docprobe.py --url https://docs.example.com/docs
 ```
+
+Crawl toolbar with concurrency:
+```bash
 python3 docprobe.py \
-  --url https://docs.kasm.com/docs \
-  --mode auto
-```
-- Crawl toolbar with concurrency
-```
-python3 docprobe.py \
-  --url https://docs.kasm.com/docs \
+  --url https://docs.example.com/docs \
   --crawl-toolbar \
   --concurrency 8 \
   --debug info
 ```
-- Crawl only first 20 pages
-```
+
+Crawl first 20 pages only:
+```bash
 python3 docprobe.py \
-  --url https://docs.kasm.com/docs \
+  --url https://docs.example.com/docs \
   --crawl-toolbar \
   --max-pages 20
 ```
 
-- Force OCR mode
-```
+Save output to a custom directory:
+```bash
 python3 docprobe.py \
-  --url https://docs.kasm.com/docs \
-  --mode ocr \
-  --crawl-toolbar
+  --url https://docs.example.com/docs \
+  --crawl-toolbar \
+  -o /home/user/docs_archive
 ```
 
-Resume a previous crawl
-```
+Resume a previous crawl:
+```bash
 python3 docprobe.py \
-  --url https://docs.kasm.com/docs \
+  --url https://docs.example.com/docs \
   --crawl-toolbar \
-  --resume \
-  --debug info
+  --resume
 ```
 
-Export per-page PDFs
-```
+Export as plain text:
+```bash
 python3 docprobe.py \
-  --url https://docs.kasm.com/docs \
+  --url https://docs.example.com/docs \
   --crawl-toolbar \
-  --export pdf
+  --export-as txt
 ```
 
-Export one combined PDF manual
-```
+Force OCR mode:
+```bash
 python3 docprobe.py \
-  --url https://docs.kasm.com/docs \
+  --url https://docs.example.com/docs \
   --crawl-toolbar \
-  --export pdf-single
+  --export-as ocr
 ```
+
 ## Notes
-- OCR requires tesseract to be installed on the system.
-- PDF export requires pandoc and a LaTeX PDF engine such as xelatex.
-- Some sites may still require site-specific tuning depending on how heavily they customize their frontend.
-- Very large crawls are best used with --resume.
+
+- OCR requires `tesseract` to be installed on the system.
+- PDF export requires `pandoc` and a LaTeX engine (`xelatex`).
+- Some sites may require site-specific tuning depending on frontend complexity.
+- Large crawls work best with `--resume` to handle interruptions.
